@@ -7,26 +7,34 @@ from vertical_scroll_panel import VerticalScrollPanel
 from database import Database
 from constants import Constants as const
 from product_description import ProductDescription
-
+from screeninfo import get_monitors
+from payment_metods import PaymentMetods
 
 class MainWindow(QMainWindow):
     previous_status = const.ST_WAIT
+    display_height = None
+    display_width = None
+    visible_item = None
 
     def __init__(self):
         super().__init__()
 
         self.db = Database()
-
         self.root_menu = True
         self.category_guid = None
         self.product_guid = None
         self.workflow_step = const.ST_WAIT
         self.settings = Settings()
         self.setStyleSheet(STYLES)
-        self.setup_ui()
+        for monitor in get_monitors():
+            if monitor.is_primary:
+                print(f"Primary display {monitor.name}, height {monitor.height}, width {monitor.width}")
+                self.display_height = monitor.height
+                self.display_width = monitor.width
 
-        #print(self.db.get_product_by_id('a57ee28d-d416-4766-b1f6-d3e0a0d619ac'))
-        self.workflow(const.GO_HOME, None)
+        self.setup_ui()
+        #self.workflow(const.GO_HOME, None)
+        self.workflow(const.GO_PAYMENT_METODS, None)
 
     def enableInactiveTimer(self, item_panel):
         self.galery.stop_inactivity_timer()
@@ -39,6 +47,8 @@ class MainWindow(QMainWindow):
                 self.products.reset_inactivity_timer()
             case const.ITEM_PRODUCT_DETAILS:
                 self.product_description.reset_inactivity_timer()
+            case const.PAYMET_METODS:
+                self.payment_metods.reset_inactivity_timer()
 
 
     def setVisibleItems(self, navigation_panel, bottom_panel, item_panel):
@@ -59,24 +69,27 @@ class MainWindow(QMainWindow):
             self.product_description.setVisible(True)
         else:
             self.product_description.setVisible(False)
-        self.visibleItem = item_panel
+        if item_panel == const.PAYMET_METODS:
+            self.top_panel.title_label.setText("Выберите способ оплаты")
+            self.payment_metods.setVisible(True)
+        else:
+            self.payment_metods.setVisible(False)
+        self.visible_item = item_panel
         self.enableInactiveTimer(item_panel)
 
     def workflow(self, step, guid):
         match step:
             case const.GO_HOME:
-
                 self.load_category(None)
                 self.category_guid = None
                 self.setVisibleItems(True, True, const.ITEM_CATEGORY)
                 self.top_panel.home_button.setEnabled(False)
                 self.top_panel.back_button.setEnabled(False)
-                self.category_guid = None
                 self.workflow_step = const.ST_WAIT
 
             case const.GO_PRODUCTS_LIST:
                 self.load_products(guid)
-                self.setVisibleItems(True, True, const.ITEM_PRODUCTS_LIST)
+                self.setVisibleItems(True, False, const.ITEM_PRODUCTS_LIST)
                 self.top_panel.home_button.setEnabled(True)
                 self.top_panel.back_button.setEnabled(True)
                 self.workflow_step = const.ST_PRODUCT_LIST
@@ -86,10 +99,9 @@ class MainWindow(QMainWindow):
                     self.workflow(const.GO_HOME, None)
                 else:
                     self.load_category(guid)
-                    self.setVisibleItems(True, True, const.ITEM_CATEGORY)
+                    self.setVisibleItems(True, False, const.ITEM_CATEGORY)
                     self.top_panel.home_button.setEnabled(True)
                     self.top_panel.back_button.setEnabled(True)
-                    self.category_guid = guid
                     self.workflow_step = const.ST_SUBCATEGORY
 
             case const.GO_BACK:
@@ -111,12 +123,18 @@ class MainWindow(QMainWindow):
                     self.top_panel.back_button.setEnabled(True)
                     self.workflow_step = const.ST_PRODUCT_DETAILS
 
+            case const.GO_PAYMENT_METODS:
+                self.setVisibleItems(True, False, const.PAYMET_METODS)
+                self.top_panel.home_button.setEnabled(True)
+                self.top_panel.back_button.setEnabled(True)
+                self.workflow_step = const.ST_PAYMET_METODS
 
     def load_category(self, guid):
         data = self.db.get_categories_with_products_hierarchy(guid)
         if len(data['items']) != 0:
             self.galery.gallery_data = data
             self.galery.load_gallery_data()
+            self.category_guid = guid
 
     def load_products(self, guid):
         data = self.db.get_items_by_category(guid)
@@ -125,48 +143,44 @@ class MainWindow(QMainWindow):
             self.products.load_gallery_data()
 
     def on_click_buttons(self, tmp):
-        print(f"Click {tmp}")
         self.workflow(tmp, None)
 
     def on_scroll_item_clicked(self, guid: str, item_data: dict):
         if guid is None:
-            print("(on_scroll_item_clicked) Сработал таймер бездействия - возврат к главному экрану")
             self.workflow(const.GO_HOME, None)
         else:
             if self.db.subcategories(guid) == 0:
-                self.category_guid = guid
                 self.workflow(const.GO_PRODUCTS_LIST, guid)
             else:
                 self.workflow(const.GO_SUBCATEGORY, guid)
 
     def on_product_clicked(self, guid: str):
         if guid is None or guid == "":
-            print("(on_product_clicked) Сработал таймер бездействия - возврат к главному экрану")
             self.workflow(const.GO_HOME, None)
         else:
-            print(f"3 Клик по элементу: {guid}")
-            print(guid)
             self.workflow(const.GO_PRODUCT_DETAILS, guid)
 
     def on_pay_clicked(self, price: float):
+        if price is None:
+            self.workflow(const.GO_HOME, None)
         print(price)
 
     def setup_ui(self):
         # self.setWindowTitle(self.title)
-        self.setGeometry(100, 100, 800, 600)
+        self.setGeometry(0, 0, self.display_width, self.display_height)
+
         central_widget = QWidget()
         self.setCentralWidget(central_widget)
-        main_layout = QVBoxLayout(central_widget)
-        main_layout.setContentsMargins(0, 0, 0, 0)
-        main_layout.setSpacing(0)
+        self.main_layout = QVBoxLayout(central_widget)
+        self.main_layout.setContentsMargins(0, 0, 0, 0)
+        self.main_layout.setSpacing(0)
 
         self.top_panel = TopPanel()
         self.bottom_panel = BottomPanel()
         self.galery = ScrollPanel()
         self.products = VerticalScrollPanel()
         self.product_description = ProductDescription()
-        #self.product_description.load_data(self.db.get_product_by_id('a57ee28d-d416-4766-b1f6-d3e0a0d619ac'))
-        self.product_description.load_data(self.db.get_product_by_id('a57ee28d-d416-4766-b1f6-d3e0a0d619ac'))
+        self.payment_metods = PaymentMetods()
 
         self.galery.root_menu = True
         self.galery.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
@@ -180,14 +194,17 @@ class MainWindow(QMainWindow):
         self.products.item_clicked.connect(self.on_product_clicked)
         self.product_description.closed_with_result.connect(self.on_pay_clicked)
 
-        main_layout.addWidget(self.top_panel)
-        main_layout.addWidget(self.galery)
-        self.galery.setVisible(True)
-        main_layout.addWidget(self.products)
+        self.main_layout.addWidget(self.top_panel)
+        self.main_layout.addWidget(self.galery)
+        self.galery.setVisible(False)
+        self.main_layout.addWidget(self.products)
         self.products.setVisible(False)
-        main_layout.addWidget(self.product_description)
+        self.main_layout.addWidget(self.product_description)
         self.product_description.setVisible(False)
-        main_layout.addWidget(self.bottom_panel)
+        self.main_layout.addWidget(self.payment_metods)
+        self.payment_metods.setVisible(True)
+        self.main_layout.addWidget(self.bottom_panel)
+
 
     def resizeEvent(self, event):
         super().resizeEvent(event)

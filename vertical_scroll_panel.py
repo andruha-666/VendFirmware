@@ -331,12 +331,14 @@ class VerticalScrollPanel(QWidget):
         return QSize(image_width, image_height)
 
     def load_gallery_data(self):
-        for i in reversed(range(self.scroll_layout.count())):
-            widget = self.scroll_layout.itemAt(i).widget()
-            if widget:
-                widget.deleteLater()
+        while self.scroll_layout.count():
+            item = self.scroll_layout.takeAt(0)
+            if item.widget():
+                item.widget().deleteLater()
 
         item_size = self.settings.ITEMS_LINE_SIZE
+
+        self.scroll_layout.addStretch()
 
         for item_data in self.gallery_data:
 
@@ -392,6 +394,7 @@ class ProductsItemWidget(QWidget):
         self.setup_ui()
 
     def setup_ui(self):
+
         layout = QHBoxLayout(self)
         layout.setContentsMargins(5, 5, 5, 5)
         layout.setSpacing(5)
@@ -419,6 +422,7 @@ class ProductsItemWidget(QWidget):
         layout.addStretch()
         product_price = ItemPriceWidget(self.item_size, self.price, self.discount)
         layout.addWidget(product_price)
+
 
 
 

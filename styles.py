@@ -34,8 +34,14 @@ QMainWindow {{
 QWidget {{
     background-color: {DARK_THEME['BACKGROUND']};
     color: {DARK_THEME['BACKGROUND']};
-    border: 1px solid {DARK_THEME['BORDER_SECONDARY']};
-    border-radius: 10px;       
+    border: None;
+}}
+
+
+QWidget#product_item {{
+    background-color: #1a1a1a !important;
+    color: #000000 !important;
+    border: 1px solid #666666 !important;
 }}
 
 /* Стили для списка */
@@ -49,14 +55,22 @@ QPushButton {{
 /* Кнопка оплаты */
 QPushButton#price_button {{
     border: 1px solid {DARK_THEME['BORDER_SECONDARY']};
+    border-radius: 10px;
     background-color: {DARK_THEME['PAY_BUTTON']};
     font-size: 30px;
     color: {DARK_THEME['TEXT_CONTRAST']};
 }}
 
+QPushButton#text_image_Button {{
+    background-color: {DARK_THEME['BACKGROUND']};
+    color: {DARK_THEME['BACKGROUND']};
+    border: None;
+}}
+
 /* Кнопка оплаты со скидкой*/
 QPushButton#discount_price_button {{
     border: 1px solid {DARK_THEME['BORDER_SECONDARY']};
+    border-radius: 10px;
     background-color: {DARK_THEME['PAY_DISCOUNT_BUTTON']};
     font-size: 30px;
     color: {DARK_THEME['TEXT_CONTRAST']};
@@ -69,7 +83,7 @@ QLabel#title_label {{
     color: {DARK_THEME['TEXT_PRIMARY']};
     padding: 10px;
     background-color: {DARK_THEME['BACKGROUND']};
-
+    border: None;
 }}
 
 /* Описание продукта */
@@ -83,6 +97,8 @@ QLabel#product_description {{
 
 /* Описание скидки */
 QLabel#discount_description {{
+    border: 1px solid {DARK_THEME['BORDER_SECONDARY']};
+    border-radius: 10px;
     font-size: 25px;
     font-weight: bold;
     color: {DARK_THEME['TEXT_DISCOUNT_DESCRIPTION']};
@@ -140,8 +156,7 @@ QLabel#price_discount_label {{
 #GaleryLabel {{
     background-color: {DARK_THEME['BACKGROUND']};
     color: {DARK_THEME['TEXT_PRIMARY']};
-    border: 0;
-    border-radius: 5px;
+    border: None;
     font-weight: bold;
     font-size: 30px;
 }}
