@@ -52,7 +52,8 @@ class VerticalScrollPanel(QWidget):
 
     def reset_inactivity_timer(self):
         """Сброс таймера бездействия"""
-        self.inactivity_timer.start(self.settings.INACTIVITY_TIMEOUT * 1000)
+        if self.isVisible():
+            self.inactivity_timer.start(self.settings.INACTIVITY_TIMEOUT * 1000)
 
     def stop_inactivity_timer(self):
         self.inactivity_timer.stop()

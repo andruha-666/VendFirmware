@@ -45,7 +45,6 @@ class ProductImage(QLabel):
             self.setText("Нет изображения")
             self.setAlignment(Qt.AlignCenter)
             self.setFixedSize(400, 400)
-            #self.setStyleSheet("border: 2px dashed #444; color: #666; font-size: 14pt; background-color: #111;")
 
     def __init__(self):
         super().__init__()
@@ -228,14 +227,12 @@ class ProductDescription(QWidget):
         self.inactivity_timer.stop()
 
     def on_inactivity_timeout(self):
-        # При таймауте бездействия возвращаем обычную цену
         self.result_value = None
         self.closed_with_result.emit(self.result_value)
         #self.reject()
 
     def buy_with_discount(self):
         self.stop_inactivity_timer()
-        # Возвращаем discount_price
         self.result_value = self.discount_price
         self.closed_with_result.emit(self.result_value)
         #self.accept()

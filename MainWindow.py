@@ -28,31 +28,39 @@ class MainWindow(QMainWindow):
         #print(self.db.get_product_by_id('a57ee28d-d416-4766-b1f6-d3e0a0d619ac'))
         self.workflow(const.GO_HOME, None)
 
+    def enableInactiveTimer(self, item_panel):
+        self.galery.stop_inactivity_timer()
+        self.products.stop_inactivity_timer()
+        self.product_description.stop_inactivity_timer()
+        match item_panel:
+            case const.ITEM_CATEGORY:
+                self.galery.reset_inactivity_timer()
+            case const.ITEM_PRODUCTS_LIST:
+                self.products.reset_inactivity_timer()
+            case const.ITEM_PRODUCT_DETAILS:
+                self.product_description.reset_inactivity_timer()
+
+
     def setVisibleItems(self, navigation_panel, bottom_panel, item_panel):
         self.top_panel.setVisible(navigation_panel)
         self.bottom_panel.setVisible(bottom_panel)
         if item_panel == const.ITEM_CATEGORY:
             self.top_panel.title_label.setText("Выберите категорию")
             self.galery.setVisible(True)
-            self.galery.reset_inactivity_timer()
         else:
             self.galery.setVisible(False)
-            self.galery.stop_inactivity_timer()
         if item_panel == const.ITEM_PRODUCTS_LIST:
             self.top_panel.title_label.setText("Выберите блюдо")
             self.products.setVisible(True)
-            self.products.reset_inactivity_timer()
         else:
             self.products.setVisible(False)
-            self.products.stop_inactivity_timer()
         if item_panel == const.ITEM_PRODUCT_DETAILS:
             self.top_panel.title_label.setText("Наименование блюда")
             self.product_description.setVisible(True)
-            self.product_description.reset_inactivity_timer()
         else:
             self.product_description.setVisible(False)
-            self.product_description.stop_inactivity_timer()
         self.visibleItem = item_panel
+        self.enableInactiveTimer(item_panel)
 
     def workflow(self, step, guid):
         match step:
@@ -122,7 +130,7 @@ class MainWindow(QMainWindow):
 
     def on_scroll_item_clicked(self, guid: str, item_data: dict):
         if guid is None:
-            print("Сработал таймер бездействия - возврат к главному экрану")
+            print("(on_scroll_item_clicked) Сработал таймер бездействия - возврат к главному экрану")
             self.workflow(const.GO_HOME, None)
         else:
             if self.db.subcategories(guid) == 0:
@@ -133,7 +141,7 @@ class MainWindow(QMainWindow):
 
     def on_product_clicked(self, guid: str):
         if guid is None or guid == "":
-            print("Сработал таймер бездействия - возврат к главному экрану")
+            print("(on_product_clicked) Сработал таймер бездействия - возврат к главному экрану")
             self.workflow(const.GO_HOME, None)
         else:
             print(f"3 Клик по элементу: {guid}")
