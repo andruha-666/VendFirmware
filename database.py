@@ -105,6 +105,13 @@ class Database:
          ''', (category_id,))
         return cursor.fetchall()
 
+    def get_payments_metods(self):
+        if not self.conn:
+            self.connect()
+        cursor = self.conn.cursor()
+        cursor.execute('''SELECT id,sys_name,name FROM payment ORDER BY name''')
+        return cursor.fetchall()
+
     def get_parent_category(self, category_id):
         if not self.conn:
             self.connect()

@@ -12,7 +12,7 @@ from styles import STYLES
 class PaymentMetods(QWidget):
     closed_with_result = pyqtSignal(object)  # Изменено на object для возврата разных типов
     summa = 500.99
-    def __init__(self):
+    def __init__(self, data):
         super().__init__()
         self.price = None
         self.discount_price = None
@@ -21,6 +21,7 @@ class PaymentMetods(QWidget):
         self.inactivity_timer.timeout.connect(self.on_inactivity_timeout)
         self.result_value = None  # Для хранения возвращаемого значения
         self.setStyleSheet(STYLES)
+        self.data = data
         self.setup_ui()
         self.setup_inactivity_timer()
     def setup_ui(self):
@@ -70,15 +71,30 @@ class PaymentMetods(QWidget):
         payment_grid_widget.setLayout(payment_grid_layout)
         self.main_layout.addWidget(payment_grid_widget)
 
-        payment_button = self.create_payment_button({"id": 1, "name": "SBP", "sys_name": "SBP"})
-        payment_grid_layout.addWidget(payment_button, 0, 0)
+        data_len = len(self.data)
+        if len(self.data) <= 5:
+            col = 0
+        elif 5 < data_len <= 10:
+            col = 1
+        else:
+            col = 2
+
+        cur_col = 0
+        cur_row = 0
+
+        for data_item in self.data:
+            if cur_col == col:
+                cur_col = 0
+                cur_row = cur_row + 1
+            payment_button = self.create_payment_button(data_item)
+            payment_grid_layout.addWidget(payment_button, cur_row, cur_col)
 
         self.main_layout.addStretch()
         self.setLayout(self.main_layout)
 
-    def create_payment_button(self, method):
+    def create_payment_button(self, data):
         """Создает кнопку для способа оплаты"""
-        button = QPushButton(method['name'])
+        button = QPushButton(data[2])
         button.setStyleSheet("""
             QPushButton {
                 background-color: #34495e;
@@ -100,7 +116,7 @@ class PaymentMetods(QWidget):
         """)
 
         # Загружаем иконку
-        icon_path = os.path.join(settings.Settings.ICONS_PATH, f"{method['sys_name']}.png")
+        icon_path = os.path.join(settings.Settings.ICONS_PATH, f"{data[1]}.png")
         if os.path.exists(icon_path):
             icon = QIcon(icon_path)
             button.setIcon(icon)
@@ -109,7 +125,7 @@ class PaymentMetods(QWidget):
             print(f"Иконка способа оплаты не найдена: {icon_path}")
 
         # Привязываем обработчик нажатия
-        button.clicked.connect(lambda checked, method_id=method['id']: self.select_payment_method(method_id))
+        button.clicked.connect(lambda checked, method_id=data[0]: self.select_payment_method(method_id))
 
         return button
 

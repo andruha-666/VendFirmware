@@ -1,3 +1,5 @@
+# pip install screeninfo
+
 from PyQt5.QtWidgets import (QMainWindow, QWidget, QVBoxLayout, QSizePolicy)
 from settings import Settings
 from styles import STYLES
@@ -35,6 +37,7 @@ class MainWindow(QMainWindow):
         self.setup_ui()
         #self.workflow(const.GO_HOME, None)
         self.workflow(const.GO_PAYMENT_METODS, None)
+
 
     def enableInactiveTimer(self, item_panel):
         self.galery.stop_inactivity_timer()
@@ -180,7 +183,7 @@ class MainWindow(QMainWindow):
         self.galery = ScrollPanel()
         self.products = VerticalScrollPanel()
         self.product_description = ProductDescription()
-        self.payment_metods = PaymentMetods()
+        self.payment_metods = PaymentMetods(self.db.get_payments_metods())
 
         self.galery.root_menu = True
         self.galery.setSizePolicy(QSizePolicy.Expanding, QSizePolicy.Expanding)
