@@ -25,6 +25,7 @@ class MainWindow(QMainWindow):
         self.root_menu = True
         self.category_guid = None
         self.product_guid = None
+        self.product_price = None
         self.workflow_step = const.ST_WAIT
         self.settings = Settings()
         self.setStyleSheet(STYLES)
@@ -35,8 +36,8 @@ class MainWindow(QMainWindow):
                 self.display_width = monitor.width
 
         self.setup_ui()
-        #self.workflow(const.GO_HOME, None)
-        self.workflow(const.GO_PAYMENT_METODS, None)
+        self.workflow(const.GO_HOME, None)
+        #self.workflow(const.GO_PAYMENT_METODS, None)
 
 
     def enableInactiveTimer(self, item_panel):
@@ -51,7 +52,7 @@ class MainWindow(QMainWindow):
             case const.ITEM_PRODUCT_DETAILS:
                 self.product_description.reset_inactivity_timer()
             case const.PAYMET_METODS:
-                self.payment_metods.reset_inactivity_timer()
+                self.payment_metods.setup_inactivity_timer()
 
 
     def setVisibleItems(self, navigation_panel, bottom_panel, item_panel):
@@ -115,6 +116,8 @@ class MainWindow(QMainWindow):
                         self.workflow(const.GO_SUBCATEGORY, self.db.get_parent_category(self.category_guid))
                     case const.ST_PRODUCT_DETAILS:
                         self.workflow(const.GO_PRODUCTS_LIST, self.category_guid)
+                    case const.ST_PAYMET_METODS:
+                        self.workflow(const.GO_PRODUCT_DETAILS, self.product_guid)
 
             case const.GO_PRODUCT_DETAILS:
                 if guid:
@@ -127,6 +130,7 @@ class MainWindow(QMainWindow):
                     self.workflow_step = const.ST_PRODUCT_DETAILS
 
             case const.GO_PAYMENT_METODS:
+                self.payment_metods.set_price(self.product_price)
                 self.setVisibleItems(True, False, const.PAYMET_METODS)
                 self.top_panel.home_button.setEnabled(True)
                 self.top_panel.back_button.setEnabled(True)
@@ -161,13 +165,21 @@ class MainWindow(QMainWindow):
         if guid is None or guid == "":
             self.workflow(const.GO_HOME, None)
         else:
+            self.product_guid = guid
             self.workflow(const.GO_PRODUCT_DETAILS, guid)
 
     def on_pay_clicked(self, price: float):
         if price is None:
+            self.payment_metods.price = None
             self.workflow(const.GO_HOME, None)
-        print(price)
+        else:
+            self.product_price = price
+            self.workflow(const.GO_PAYMENT_METODS, None)
 
+    def on_payment_metod(self, metod: str):
+        ############# Добавить обработку платежа  #############
+        self.workflow(const.GO_HOME, None)
+        
     def setup_ui(self):
         # self.setWindowTitle(self.title)
         self.setGeometry(0, 0, self.display_width, self.display_height)
@@ -196,6 +208,7 @@ class MainWindow(QMainWindow):
         self.galery.item_clicked.connect(self.on_scroll_item_clicked)
         self.products.item_clicked.connect(self.on_product_clicked)
         self.product_description.closed_with_result.connect(self.on_pay_clicked)
+        self.payment_metods.closed_with_result.connect(self.on_payment_metod)
 
         self.main_layout.addWidget(self.top_panel)
         self.main_layout.addWidget(self.galery)

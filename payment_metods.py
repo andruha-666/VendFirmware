@@ -23,6 +23,7 @@ class PaymentMetods(QWidget):
         self.setStyleSheet(STYLES)
         self.data = data
         self.setup_ui()
+        self.remaining_time = 0
         self.setup_inactivity_timer()
     def setup_ui(self):
 
@@ -42,12 +43,12 @@ class PaymentMetods(QWidget):
         summa_title.setAlignment(Qt.AlignCenter)
 
         # Сумма
-        summa_label = QLabel(f"{self.summa:.2f} ₽")
-        summa_label.setStyleSheet("font-size: 32pt; font-weight: bold; color: #27ae60;")
-        summa_label.setAlignment(Qt.AlignCenter)
+        self.summa_label = QLabel()
+        self.summa_label.setStyleSheet("font-size: 32pt; font-weight: bold; color: #27ae60;")
+        self.summa_label.setAlignment(Qt.AlignCenter)
 
         summa_layout.addWidget(summa_title)
-        summa_layout.addWidget(summa_label)
+        summa_layout.addWidget(self.summa_label)
 
         self.main_layout.addLayout(summa_layout)
 
@@ -72,60 +73,54 @@ class PaymentMetods(QWidget):
         self.main_layout.addWidget(payment_grid_widget)
 
         data_len = len(self.data)
-        if len(self.data) <= 5:
+        if len(self.data) <= 3:
             col = 0
-        elif 5 < data_len <= 10:
+        elif 3 < data_len <= 6:
             col = 1
         else:
             col = 2
-
+        print(col)
         cur_col = 0
         cur_row = 0
 
         for data_item in self.data:
+            payment_button = self.create_payment_button(data_item)
+            payment_grid_layout.addWidget(payment_button, cur_row, cur_col)
             if cur_col == col:
                 cur_col = 0
                 cur_row = cur_row + 1
-            payment_button = self.create_payment_button(data_item)
-            payment_grid_layout.addWidget(payment_button, cur_row, cur_col)
+            else:
+                cur_col = cur_col + 1
 
         self.main_layout.addStretch()
+        self.timer_layout = QHBoxLayout()
+        self.timer_layout.addStretch()
+        self.remaining_time_label = QLabel()
+        self.remaining_time_label.setObjectName("remaining_time_label")
+        self.timer_layout.addWidget(self.remaining_time_label)
+        self.timer_layout.addStretch()
+        self.main_layout.addLayout(self.timer_layout)
         self.setLayout(self.main_layout)
 
+    def set_price(self, price):
+        self.summa = price
+        self.summa_label.setText(f"{self.summa:.2f} ₽")
     def create_payment_button(self, data):
         """Создает кнопку для способа оплаты"""
         button = QPushButton(data[2])
-        button.setStyleSheet("""
-            QPushButton {
-                background-color: #34495e;
-                color: white;
-                border: none;
-                padding: 20px 15px;
-                border-radius: 10px;
-                font-size: 14pt;
-                font-weight: bold;
-                min-height: 120px;
-                min-width: 200px;
-            }
-            QPushButton:hover {
-                background-color: #4a6a8a;
-            }
-            QPushButton:pressed {
-                background-color: #2c3e50;
-            }
-        """)
-
+        button.setObjectName("payment_metod")
+        metod_id = data[1]
         # Загружаем иконку
         icon_path = os.path.join(settings.Settings.ICONS_PATH, f"{data[1]}.png")
         if os.path.exists(icon_path):
             icon = QIcon(icon_path)
             button.setIcon(icon)
-            button.setIconSize(QSize(64, 64))
+            button.setIconSize(QSize(100, 100))
         else:
             print(f"Иконка способа оплаты не найдена: {icon_path}")
 
         # Привязываем обработчик нажатия
-        button.clicked.connect(lambda checked, method_id=data[0]: self.select_payment_method(method_id))
+        button.clicked.connect(lambda checked, method_id=data[0]: self.select_payment_metod(metod_id))
 
         return button
 
@@ -138,45 +133,26 @@ class PaymentMetods(QWidget):
             print(f"Иконка не найдена: {icon_path}")
             return QIcon()
 
-
-
     def setup_inactivity_timer(self):
-        self.inactivity_timer.start(settings.Settings.INACTIVITY_TIMEOUT * 1000)
-
-    def reset_inactivity_timer(self):
-        self.inactivity_timer.stop()
-        self.inactivity_timer.start(settings.Settings.INACTIVITY_TIMEOUT * 1000)
+        self.remaining_time = settings.Settings.INACTIVITY_TIMEOUT
+        self.inactivity_timer.start(1000)
 
     def stop_inactivity_timer(self):
         self.inactivity_timer.stop()
 
     def on_inactivity_timeout(self):
-        self.result_value = None
-        self.closed_with_result.emit(self.result_value)
-        #self.reject()
+        self.remaining_time = self.remaining_time - 1
+        self.remaining_time_label.setText(f"Окно закроется через {self.remaining_time} сек.")
+        self.inactivity_timer.start(1000)
+        if self.remaining_time == 0:
+            self.result_value = None
+            self.closed_with_result.emit(None)
+            self.stop_inactivity_timer()
 
-    def buy_with_discount(self):
+    def select_payment_metod(self, metod_id):
+        print(metod_id)
         self.stop_inactivity_timer()
-        self.result_value = self.discount_price
-        self.closed_with_result.emit(self.result_value)
-        #self.accept()
-
-    def buy_normal(self):
-        self.stop_inactivity_timer()
-        # Возвращаем обычную цену
-        self.result_value = self.price
-        self.closed_with_result.emit(self.result_value)
-        #self.accept()
-
-    def close_window(self):
-        # При закрытии через кнопку "Вернуться в меню" возвращаем None
-        self.result_value = None
-        self.closed_with_result.emit(self.result_value)
-        self.reject()
-
-    def get_result(self):
-        """Метод для получения результата после закрытия окна"""
-        return self.result_value
+        self.closed_with_result.emit(metod_id)
 
     def showEvent(self, event):
         """Гарантируем полноэкранный режим при показе окна"""
@@ -184,14 +160,3 @@ class PaymentMetods(QWidget):
         # Дополнительная проверка - если окно не в полноэкранном режиме, переключаем
         if not self.isFullScreen():
             self.showFullScreen()
-
-    def mousePressEvent(self, event):
-        self.reset_inactivity_timer()
-        super().mousePressEvent(event)
-
-    def keyPressEvent(self, event):
-        self.reset_inactivity_timer()
-        # Закрытие по Escape - возвращаем None
-        if event.key() == Qt.Key_Escape:
-            self.close_window()
-        super().keyPressEvent(event)

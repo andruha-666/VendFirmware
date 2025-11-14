@@ -95,6 +95,15 @@ QLabel#product_description {{
     background-color: {DARK_THEME['BACKGROUND']};
 }}
 
+
+QLabel#remaining_time_label {{
+    font-size: 30px;
+    font-weight: bold;
+    color: {DARK_THEME['TEXT_PRIMARY']};
+    padding: 10px;
+    background-color: {DARK_THEME['BACKGROUND']};
+}}
+
 /* Описание скидки */
 QLabel#discount_description {{
     border: 1px solid {DARK_THEME['BORDER_SECONDARY']};
@@ -114,6 +123,19 @@ QLabel#description_name {{
     padding: 10px;
     background-color: {DARK_THEME['BACKGROUND_SECONDARY']};
     border: 1px solid {DARK_THEME['BORDER_SECONDARY']};
+}}
+
+/* Кнопка выбора способа оплаты */
+QPushButton#payment_metod {{
+                background-color: {DARK_THEME['BACKGROUND_SECONDARY']};
+                color: {DARK_THEME['TEXT_PRIMARY']};
+                border: none;
+                padding: 20px 15px;
+                border-radius: 10px;
+                font-size: 14pt;
+                font-weight: bold;
+                min-height: 120px;
+                min-width: 200px;
 }}
 
 /* Текст параметра */
