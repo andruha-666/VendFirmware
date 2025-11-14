@@ -179,7 +179,7 @@ class MainWindow(QMainWindow):
     def on_payment_metod(self, metod: str):
         ############# Добавить обработку платежа  #############
         self.workflow(const.GO_HOME, None)
-        
+
     def setup_ui(self):
         # self.setWindowTitle(self.title)
         self.setGeometry(0, 0, self.display_width, self.display_height)
